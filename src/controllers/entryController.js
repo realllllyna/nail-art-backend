@@ -40,7 +40,7 @@ exports.createEntry = async (req, res) => {
 exports.updateEntry = async (req, res) => {
     try {
         const { id } = req.params;
-        const { title, description, categoryId, imageUrl } = req.body;
+        const { title, description, categoryId, imageUrl, price, artist, duration, colorOptions, materials, aftercare, allergyWarnings, availability } = req.body;
 
         const entry = await Entry.findByPk(id);
 
@@ -48,14 +48,38 @@ exports.updateEntry = async (req, res) => {
             return res.status(404).json({ error: 'Entry not found' });
         }
 
-        // Update the entry with the new fields, using categoryId instead of category
+        // Validate if categoryId exists in Categories table
+        const category = await Category.findByPk(categoryId);
+        if (!category) {
+            return res.status(400).json({ error: 'Invalid categoryId' });
+        }
+
+        // Update the entry with the new fields
         entry.title = title;
         entry.description = description;
-        entry.categoryId = categoryId; // Update using categoryId (foreign key)
+        entry.categoryId = categoryId;  // Use categoryId (foreign key)
         entry.imageUrl = imageUrl;
+        entry.price = price;
+        entry.artist = artist;
+        entry.duration = duration;
+        entry.colorOptions = colorOptions;
+        entry.materials = materials;
+        entry.aftercare = aftercare;
+        entry.allergyWarnings = allergyWarnings;
+        entry.availability = availability;
 
-        await entry.save();
-        res.status(200).json(entry);
+        await entry.save();  // Save the updated entry
+
+        // Return the updated entry along with the associated category
+        const updatedEntry = await Entry.findByPk(id, {
+            include: {
+                model: Category,
+                as: 'category', // Include category as part of the response
+                attributes: ['name']
+            }
+        });
+
+        res.status(200).json(updatedEntry);  // Return the updated entry with category
     } catch (err) {
         res.status(500).json({ error: err.message });
     }

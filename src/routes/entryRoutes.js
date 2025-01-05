@@ -72,22 +72,13 @@ router.post('/', [
 });
 
 // Update an entry by ID (for editing in NailArtDetail.vue)
-router.put('/:id', [
-    body('title').notEmpty().withMessage('Title is required'),
-    body('description').notEmpty().withMessage('Description is required'),
-    body('categoryId').isInt().withMessage('categoryId must be an integer'),
-], async (req, res) => {
-    // Validate incoming request data
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-        return res.status(400).json({ errors: errors.array() });
-    }
+router.put('/:id', async (req, res) => {
+    const { id } = req.params;
+    const { title, description, categoryId, imageUrl, price, artist, duration, colorOptions, materials, aftercare, allergyWarnings, availability } = req.body;
 
     try {
-        const { id } = req.params;
-        const { title, description, categoryId, imageUrl } = req.body;
-
         const entry = await Entry.findByPk(id);
+
         if (!entry) {
             return res.status(404).json({ error: 'Entry not found' });
         }
@@ -98,16 +89,26 @@ router.put('/:id', [
             return res.status(400).json({ error: 'Invalid categoryId' });
         }
 
+        // Update the entry with all new fields
         entry.title = title;
         entry.description = description;
-        entry.categoryId = categoryId; // Update categoryId (foreign key)
+        entry.categoryId = categoryId;  // Use categoryId (foreign key)
         entry.imageUrl = imageUrl;
+        entry.price = price;
+        entry.artist = artist;
+        entry.duration = duration;
+        entry.colorOptions = colorOptions;
+        entry.materials = materials;
+        entry.aftercare = aftercare;
+        entry.allergyWarnings = allergyWarnings;
+        entry.availability = availability;
 
-        await entry.save();
-        res.json(entry);
+        await entry.save();  // Save the updated entry
+        res.status(200).json(entry);  // Return the updated entry
+
     } catch (error) {
         console.error('Error updating entry:', error.message);
-        res.status(400).json({ error: 'Bad Request' });
+        res.status(500).json({ error: 'Internal Server Error' });
     }
 });
 
