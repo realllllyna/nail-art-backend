@@ -12,7 +12,7 @@ const Category = sequelize.define('Category', {
   },
   description: {
     type: DataTypes.TEXT,
-    allowNull: true, // Description is optional
+    allowNull: false, // Description is optional
   },
 }, {
   tableName: 'Categories',

@@ -56,7 +56,7 @@ router.get('/:id', [
 router.post('/add', [
     body('title').notEmpty().withMessage('Title is required'),
     body('description').notEmpty().withMessage('Description is required'),
-    body('categoryId').isInt().withMessage('Category ID must be an integer'),
+    body('categoryId').optional().isInt().withMessage('Category ID must be an integer'),
     body('price').isFloat({ min: 0 }).withMessage('Price must be a positive number'),
     body('artist').notEmpty().withMessage('Artist is required'),
     body('duration').isInt({ min: 1 }).withMessage('Duration must be a positive integer'),
@@ -118,7 +118,7 @@ router.put('/:id', [
     param('id').isInt().withMessage('ID must be a valid integer'),
     body('title').notEmpty().withMessage('Title is required'),
     body('description').notEmpty().withMessage('Description is required'),
-    body('categoryId').isInt().withMessage('Category ID must be an integer'),
+    body('categoryId').optional().isInt().withMessage('Category ID must be an integer'),
     body('price').isFloat({ min: 0 }).withMessage('Price must be a positive number'),
     body('artist').notEmpty().withMessage('Artist is required'),
     body('duration').isInt({ min: 1 }).withMessage('Duration must be a positive integer'),

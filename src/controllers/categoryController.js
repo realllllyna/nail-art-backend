@@ -13,7 +13,12 @@ const handleValidationErrors = (req, res) => {
 exports.getCategories = async (req, res) => {
     try {
         const categories = await Category.findAll({
-            include: { model: Entry, as: 'entries' }, // Include associated entries
+            include: {
+                model: Entry,
+                as: 'entries',
+                attributes: ['id', 'title'], // Include relevant entry fields
+            },
+            attributes: ['id', 'name', 'description'], // Return specific category fields
         });
         res.status(200).json(categories);
     } catch (err) {
@@ -27,6 +32,10 @@ exports.createCategory = async (req, res) => {
     handleValidationErrors(req, res);
 
     const { name, description } = req.body;
+
+    if (!name || !description) {
+        return res.status(400).json({ error: 'Both name and description are required.' });
+    }
 
     try {
         const category = await Category.create({ name, description });
@@ -55,8 +64,12 @@ exports.updateCategory = async (req, res) => {
             return res.status(404).json({ error: 'Category not found. Please check the ID and try again.' });
         }
 
-        category.name = name || category.name;
-        category.description = description || category.description;
+        if (!name || !description) {
+            return res.status(400).json({ error: 'Both name and description are required.' });
+        }
+
+        category.name = name;
+        category.description = description;
         await category.save();
 
         res.status(200).json(category);
@@ -73,19 +86,29 @@ exports.deleteCategory = async (req, res) => {
     const { id } = req.params;
 
     try {
-        const category = await Category.findByPk(id);
+        console.log('Received ID for deletion:', id);
 
+        // Find the category by ID
+        const category = await Category.findByPk(id);
         if (!category) {
+            console.log('Category not found for ID:', id);
             return res.status(404).json({ error: 'Category not found. Please check the ID and try again.' });
         }
 
-        // Unassign entries associated with the category
-        await Entry.update({ categoryId: null }, { where: { categoryId: id } });
+        console.log('Found category:', category);
 
+        // Unassign entries associated with the category
+        const updatedEntries = await Entry.update({ categoryId: null }, { where: { categoryId: id } });
+        console.log('Entries updated:', updatedEntries);
+
+        // Delete the category
+        console.log('Attempting to delete category...');
         await category.destroy();
+        console.log('Category deleted successfully');
+
         res.status(200).json({ message: 'Category deleted successfully.' });
     } catch (err) {
-        console.error('Error deleting category:', err.message);
+        console.error('Error deleting category:', err.stack || err.message || err);
         res.status(500).json({ error: 'Failed to delete category. Please try again later.' });
     }
 };

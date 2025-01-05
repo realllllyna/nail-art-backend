@@ -40,7 +40,7 @@ const Entry = sequelize.define('Entry', {
   },
   categoryId: {
     type: DataTypes.INTEGER,
-    allowNull: false,
+    allowNull: true,
     references: {
       model: 'Categories', // Use table name as a reference
       key: 'id',
