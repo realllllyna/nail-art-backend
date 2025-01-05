@@ -1,8 +1,16 @@
 const express = require('express');
 const router = express.Router();
-const Entry = require('../models/entry'); // Adjust the path if needed
+const Entry = require('../models/entry'); // Import Entry model
 const Category = require('../models/category'); // Import Category model
-const { body, validationResult } = require('express-validator');
+const { body, param, validationResult } = require('express-validator');
+
+// Helper function to handle validation errors
+const handleValidationErrors = (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+    }
+};
 
 // Get all entries (for Gallery.vue)
 router.get('/', async (req, res) => {
@@ -22,7 +30,10 @@ router.get('/', async (req, res) => {
 });
 
 // Get a single entry by ID (for NailArtDetail.vue)
-router.get('/:id', async (req, res) => {
+router.get('/:id', [
+    param('id').isInt().withMessage('ID must be a valid integer'),
+], async (req, res) => {
+    handleValidationErrors(req, res);
     try {
         const entry = await Entry.findByPk(req.params.id, {
             include: {
@@ -44,10 +55,9 @@ router.get('/:id', async (req, res) => {
 
 // Create a new entry (for AddNail.vue)
 router.post('/add', [
-    // Validation middleware
     body('title').notEmpty().withMessage('Title is required'),
     body('description').notEmpty().withMessage('Description is required'),
-    body('categoryId').isInt().withMessage('categoryId must be an integer'),
+    body('categoryId').isInt().withMessage('Category ID must be an integer'),
     body('price').isFloat({ min: 0 }).withMessage('Price must be a positive number'),
     body('artist').notEmpty().withMessage('Artist is required'),
     body('duration').isInt({ min: 1 }).withMessage('Duration must be a positive integer'),
@@ -58,11 +68,7 @@ router.post('/add', [
     body('allergyWarnings').optional().isString().withMessage('Allergy warnings must be a string'),
     body('availability').optional().isString().withMessage('Availability must be a string'),
 ], async (req, res) => {
-    // Validate incoming request data
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-        return res.status(400).json({ errors: errors.array() });
-    }
+    handleValidationErrors(req, res);
 
     try {
         const {
@@ -80,13 +86,11 @@ router.post('/add', [
             availability,
         } = req.body;
 
-        // Validate if categoryId exists in Categories table
         const category = await Category.findByPk(categoryId);
         if (!category) {
             return res.status(400).json({ error: 'Invalid categoryId' });
         }
 
-        // Create the new entry
         const newEntry = await Entry.create({
             title,
             description,
@@ -102,8 +106,8 @@ router.post('/add', [
             availability,
         });
 
-        console.log('New entry created:', newEntry); // Debugging log
-        res.status(201).json(newEntry); // Respond with the created entry
+        console.log('New entry created:', newEntry);
+        res.status(201).json(newEntry);
     } catch (error) {
         console.error('Error creating entry:', error.message);
         res.status(500).json({ error: 'Internal Server Error' });
@@ -111,40 +115,38 @@ router.post('/add', [
 });
 
 // Update an entry by ID (for editing in NailArtDetail.vue)
-router.put('/:id', async (req, res) => {
-    const { id } = req.params;
-    const { title, description, categoryId, imageUrl, price, artist, duration, colorOptions, materials, aftercare, allergyWarnings, availability } = req.body;
+router.put('/:id', [
+    param('id').isInt().withMessage('ID must be a valid integer'),
+    body('title').notEmpty().withMessage('Title is required'),
+    body('description').notEmpty().withMessage('Description is required'),
+    body('categoryId').isInt().withMessage('Category ID must be an integer'),
+    body('price').isFloat({ min: 0 }).withMessage('Price must be a positive number'),
+    body('artist').notEmpty().withMessage('Artist is required'),
+    body('duration').isInt({ min: 1 }).withMessage('Duration must be a positive integer'),
+    body('imageUrl').optional().isString().withMessage('Image URL must be a string'),
+    body('colorOptions').optional().isString().withMessage('Color options must be a string'),
+    body('materials').optional().isString().withMessage('Materials must be a string'),
+    body('aftercare').optional().isString().withMessage('Aftercare must be a string'),
+    body('allergyWarnings').optional().isString().withMessage('Allergy warnings must be a string'),
+    body('availability').optional().isString().withMessage('Availability must be a string'),
+], async (req, res) => {
+    handleValidationErrors(req, res);
 
     try {
-        const entry = await Entry.findByPk(id);
-
+        const entry = await Entry.findByPk(req.params.id);
         if (!entry) {
             return res.status(404).json({ error: 'Entry not found' });
         }
 
-        // Validate if categoryId exists in Categories table
-        const category = await Category.findByPk(categoryId);
+        const category = await Category.findByPk(req.body.categoryId);
         if (!category) {
             return res.status(400).json({ error: 'Invalid categoryId' });
         }
 
-        // Update the entry with all new fields
-        entry.title = title;
-        entry.description = description;
-        entry.categoryId = categoryId;  // Use categoryId (foreign key)
-        entry.imageUrl = imageUrl;
-        entry.price = price;
-        entry.artist = artist;
-        entry.duration = duration;
-        entry.colorOptions = colorOptions;
-        entry.materials = materials;
-        entry.aftercare = aftercare;
-        entry.allergyWarnings = allergyWarnings;
-        entry.availability = availability;
+        Object.assign(entry, req.body);
+        await entry.save();
 
-        await entry.save();  // Save the updated entry
-        res.status(200).json(entry);  // Return the updated entry
-
+        res.status(200).json(entry);
     } catch (error) {
         console.error('Error updating entry:', error.message);
         res.status(500).json({ error: 'Internal Server Error' });
@@ -152,16 +154,18 @@ router.put('/:id', async (req, res) => {
 });
 
 // Delete an entry by ID (for deleting in NailArtDetail.vue)
-router.delete('/:id', async (req, res) => {
-    try {
-        const { id } = req.params;
-        const entry = await Entry.findByPk(id);
+router.delete('/:id', [
+    param('id').isInt().withMessage('ID must be a valid integer'),
+], async (req, res) => {
+    handleValidationErrors(req, res);
 
+    try {
+        const entry = await Entry.findByPk(req.params.id);
         if (!entry) {
             return res.status(404).json({ error: 'Entry not found' });
         }
 
-        await entry.destroy(); // Delete the entry from the database
+        await entry.destroy();
         res.json({ message: 'Entry deleted successfully' });
     } catch (error) {
         console.error('Error deleting entry:', error.message);

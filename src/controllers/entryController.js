@@ -1,131 +1,151 @@
 const Entry = require('../models/entry');
+const Category = require('../models/category');
 
 // Get all entries
 exports.getEntries = async (req, res) => {
     try {
-        // Fetch all entries, now including the associated Category model using `include`
         const entries = await Entry.findAll({
             include: {
-                model: require('../models/category'), // Include the Category model
-                as: 'category', // Use the alias set in the `Entry` model
+                model: Category,
+                as: 'category',
                 attributes: ['name'], // Fetch only the 'name' field from the Category table
             },
         });
         res.status(200).json(entries);
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        console.error('Error fetching entries:', err.message);
+        res.status(500).json({ error: 'Failed to fetch entries. Please try again later.' });
     }
 };
 
-// Create an entry
+// Create a new entry
 exports.createEntry = async (req, res) => {
     try {
-      const {
-        title,
-        description,
-        categoryId,
-        imageUrl,
-        price,
-        artist,
-        duration,
-        colorOptions,
-        materials,
-        aftercare,
-        allergyWarnings,
-        availability,
-      } = req.body;
-  
-      // Validate categoryId
-      const category = await Category.findByPk(categoryId);
-      if (!category) {
-        return res.status(400).json({ error: 'Invalid categoryId' });
-      }
-  
-      const newEntry = await Entry.create({
-        title,
-        description,
-        categoryId,
-        imageUrl,
-        price,
-        artist,
-        duration,
-        colorOptions,
-        materials,
-        aftercare,
-        allergyWarnings,
-        availability,
-      });
-  
-      console.log('New entry created:', newEntry);
-      res.status(201).json(newEntry);
-    } catch (error) {
-      console.error('Error creating entry:', error.message);
-      res.status(500).json({ error: 'Internal Server Error' });
-    }
-  };
+        const {
+            title,
+            description,
+            categoryId,
+            imageUrl,
+            price,
+            artist,
+            duration,
+            colorOptions,
+            materials,
+            aftercare,
+            allergyWarnings,
+            availability,
+        } = req.body;
 
-// Update an entry
+        // Validate categoryId
+        const category = await Category.findByPk(categoryId);
+        if (!category) {
+            return res.status(400).json({ error: 'Invalid categoryId. Please select a valid category.' });
+        }
+
+        // Create the new entry
+        const newEntry = await Entry.create({
+            title,
+            description,
+            categoryId,
+            imageUrl,
+            price,
+            artist,
+            duration,
+            colorOptions,
+            materials,
+            aftercare,
+            allergyWarnings,
+            availability,
+        });
+
+        console.log('New entry created:', newEntry);
+        res.status(201).json(newEntry);
+    } catch (error) {
+        console.error('Error creating entry:', error.message);
+        res.status(500).json({ error: 'Failed to create entry. Please try again later.' });
+    }
+};
+
+// Update an entry by ID
 exports.updateEntry = async (req, res) => {
     try {
         const { id } = req.params;
-        const { title, description, categoryId, imageUrl, price, artist, duration, colorOptions, materials, aftercare, allergyWarnings, availability } = req.body;
+        const {
+            title,
+            description,
+            categoryId,
+            imageUrl,
+            price,
+            artist,
+            duration,
+            colorOptions,
+            materials,
+            aftercare,
+            allergyWarnings,
+            availability,
+        } = req.body;
 
+        // Validate entry existence
         const entry = await Entry.findByPk(id);
-
         if (!entry) {
-            return res.status(404).json({ error: 'Entry not found' });
+            return res.status(404).json({ error: 'Entry not found. Please check the ID and try again.' });
         }
 
-        // Validate if categoryId exists in Categories table
+        // Validate categoryId existence
         const category = await Category.findByPk(categoryId);
         if (!category) {
-            return res.status(400).json({ error: 'Invalid categoryId' });
+            return res.status(400).json({ error: 'Invalid categoryId. Please select a valid category.' });
         }
 
-        // Update the entry with the new fields
-        entry.title = title;
-        entry.description = description;
-        entry.categoryId = categoryId;  // Use categoryId (foreign key)
-        entry.imageUrl = imageUrl;
-        entry.price = price;
-        entry.artist = artist;
-        entry.duration = duration;
-        entry.colorOptions = colorOptions;
-        entry.materials = materials;
-        entry.aftercare = aftercare;
-        entry.allergyWarnings = allergyWarnings;
-        entry.availability = availability;
+        // Update the entry with new data
+        Object.assign(entry, {
+            title,
+            description,
+            categoryId,
+            imageUrl,
+            price,
+            artist,
+            duration,
+            colorOptions,
+            materials,
+            aftercare,
+            allergyWarnings,
+            availability,
+        });
 
-        await entry.save();  // Save the updated entry
+        await entry.save();
 
-        // Return the updated entry along with the associated category
+        // Include updated category in the response
         const updatedEntry = await Entry.findByPk(id, {
             include: {
                 model: Category,
-                as: 'category', // Include category as part of the response
-                attributes: ['name']
-            }
+                as: 'category',
+                attributes: ['name'],
+            },
         });
 
-        res.status(200).json(updatedEntry);  // Return the updated entry with category
+        res.status(200).json(updatedEntry);
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        console.error('Error updating entry:', err.message);
+        res.status(500).json({ error: 'Failed to update entry. Please try again later.' });
     }
 };
 
-// Delete an entry
+// Delete an entry by ID
 exports.deleteEntry = async (req, res) => {
     try {
         const { id } = req.params;
-        const entry = await Entry.findByPk(id);
 
+        // Validate entry existence
+        const entry = await Entry.findByPk(id);
         if (!entry) {
-            return res.status(404).json({ error: 'Entry not found' });
+            return res.status(404).json({ error: 'Entry not found. Please check the ID and try again.' });
         }
 
         await entry.destroy();
-        res.status(204).send(); // Successful deletion, no content in response
+        res.status(200).json({ message: 'Entry deleted successfully.' });
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        console.error('Error deleting entry:', err.message);
+        res.status(500).json({ error: 'Failed to delete entry. Please try again later.' });
     }
 };

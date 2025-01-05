@@ -1,5 +1,13 @@
 const Category = require('../models/category');
-const { body, validationResult } = require('express-validator');
+const { body, param, validationResult } = require('express-validator');
+
+// Helper function to handle validation errors
+const handleValidationErrors = (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+    }
+};
 
 // Get all categories
 exports.getCategories = async (req, res) => {
@@ -7,67 +15,72 @@ exports.getCategories = async (req, res) => {
         const categories = await Category.findAll();
         res.status(200).json(categories);
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        console.error('Error fetching categories:', err.message);
+        res.status(500).json({ error: 'Failed to fetch categories. Please try again later.' });
     }
 };
 
-// Create a category
+// Create a new category
 exports.createCategory = async (req, res) => {
+    handleValidationErrors(req, res);
+
     const { name, description } = req.body;
 
     try {
         const category = await Category.create({ name, description });
-        res.status(201).json(category); // Successfully created category
+        res.status(201).json(category);
     } catch (err) {
-        // Log the full error details to understand what's causing the validation error
-        console.error('Error creating category:', err);
+        console.error('Error creating category:', err.message);
 
-        // Send a more detailed error response to the client
         if (err.errors) {
             return res.status(400).json({ error: 'Validation error', details: err.errors });
         }
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ error: 'Failed to create category. Please try again later.' });
     }
 };
 
 // Update a category
 exports.updateCategory = async (req, res) => {
-    try {
-        const { id } = req.params;
-        const { name, description } = req.body;
+    handleValidationErrors(req, res);
 
-        // Find the category by primary key (id)
+    const { id } = req.params;
+    const { name, description } = req.body;
+
+    try {
         const category = await Category.findByPk(id);
 
         if (!category) {
-            return res.status(404).json({ error: 'Category not found' });
+            return res.status(404).json({ error: 'Category not found. Please check the ID and try again.' });
         }
 
-        // Update the category with the new data
-        category.name = name || category.name; // Only update if a new name is provided
-        category.description = description || category.description; // Only update if a new description is provided
+        category.name = name || category.name;
+        category.description = description || category.description;
         await category.save();
 
         res.status(200).json(category);
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        console.error('Error updating category:', err.message);
+        res.status(500).json({ error: 'Failed to update category. Please try again later.' });
     }
 };
 
 // Delete a category
 exports.deleteCategory = async (req, res) => {
+    handleValidationErrors(req, res);
+
+    const { id } = req.params;
+
     try {
-        const { id } = req.params;
         const category = await Category.findByPk(id);
 
         if (!category) {
-            return res.status(404).json({ error: 'Category not found' });
+            return res.status(404).json({ error: 'Category not found. Please check the ID and try again.' });
         }
 
-        // Destroy the category
         await category.destroy();
-        res.status(204).send(); // Successfully deleted, no content in response
+        res.status(200).json({ message: 'Category deleted successfully.' });
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        console.error('Error deleting category:', err.message);
+        res.status(500).json({ error: 'Failed to delete category. Please try again later.' });
     }
 };

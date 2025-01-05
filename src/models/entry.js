@@ -1,4 +1,3 @@
-// models/entry.js
 const { DataTypes } = require('sequelize');
 const sequelize = require('../db');
 const Category = require('./category'); // Import Category model
@@ -44,8 +43,8 @@ const Entry = sequelize.define('Entry', {
     type: DataTypes.INTEGER,
     allowNull: false, // Ensures a categoryId is always set
     references: {
-      model: Category,  // Reference the Category table
-      key: 'id',        // Reference the `id` field in Category table
+      model: Category, 
+      key: 'id', 
     },
   },
 }, {
