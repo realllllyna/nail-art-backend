@@ -114,41 +114,55 @@ router.post('/add', [
 });
 
 // Update an entry by ID (for editing in NailArtDetail.vue)
-router.put('/:id', [
-    param('id').isInt().withMessage('ID must be a valid integer'),
-    body('title').notEmpty().withMessage('Title is required'),
-    body('description').notEmpty().withMessage('Description is required'),
-    body('categoryId').optional().isInt().withMessage('Category ID must be an integer'),
-    body('price').isFloat({ min: 0 }).withMessage('Price must be a positive number'),
-    body('artist').notEmpty().withMessage('Artist is required'),
-    body('duration').isInt({ min: 1 }).withMessage('Duration must be a positive integer'),
-    body('imageUrl').optional().isString().withMessage('Image URL must be a string'),
-    body('colorOptions').optional().isString().withMessage('Color options must be a string'),
-    body('materials').optional().isString().withMessage('Materials must be a string'),
-    body('aftercare').optional().isString().withMessage('Aftercare must be a string'),
-    body('allergyWarnings').optional().isString().withMessage('Allergy warnings must be a string'),
-    body('availability').optional().isString().withMessage('Availability must be a string'),
-], async (req, res) => {
-    handleValidationErrors(req, res);
-
+router.put('/:id', async (req, res) => {
     try {
+        // Find the entry by ID
         const entry = await Entry.findByPk(req.params.id);
         if (!entry) {
-            return res.status(404).json({ error: 'Entry not found' });
+            return res.status(404).json({ error: "Entry not found" });
         }
 
-        const category = await Category.findByPk(req.body.categoryId);
-        if (!category) {
-            return res.status(400).json({ error: 'Invalid categoryId' });
+        // Validate and update category if provided
+        if (req.body.categoryId) {
+            const category = await Category.findByPk(req.body.categoryId);
+            if (!category) {
+                return res.status(400).json({ error: "Invalid categoryId" });
+            }
+            entry.categoryId = req.body.categoryId;
         }
 
-        Object.assign(entry, req.body);
+        // Update only the allowed fields
+        const updatableFields = [
+            'title',
+            'description',
+            'price',
+            'artist',
+            'duration',
+            'imageUrl',
+            'colorOptions',
+            'materials',
+            'aftercare',
+            'allergyWarnings',
+            'availability',
+        ];
+        updatableFields.forEach((field) => {
+            if (req.body[field] !== undefined) {
+                entry[field] = req.body[field];
+            }
+        });
+
+        // Save the updated entry
+        console.log("Data before save:", entry.toJSON());
         await entry.save();
 
-        res.status(200).json(entry);
+        res.status(200).json({
+            success: true,
+            message: "Entry updated successfully",
+            data: entry,
+        });
     } catch (error) {
-        console.error('Error updating entry:', error.message);
-        res.status(500).json({ error: 'Internal Server Error' });
+        console.error("Error updating entry:", error);
+        res.status(500).json({ error: "Failed to update entry", details: error.message });
     }
 });
 
