@@ -5,9 +5,9 @@ const Category = sequelize.define('Category', {
   name: {
     type: DataTypes.STRING,
     allowNull: false,
-    unique: true,  // Ensure no duplicate categories
+    unique: true, // Ensure no duplicate categories
     validate: {
-      notEmpty: true,  // Ensure the name is not empty
+      notEmpty: true, // Ensure the name is not empty
     },
   },
   description: {

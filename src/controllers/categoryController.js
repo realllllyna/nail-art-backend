@@ -1,4 +1,4 @@
-const Category = require('../models/category');
+const { Category, Entry } = require('../models');
 const { body, param, validationResult } = require('express-validator');
 
 // Helper function to handle validation errors
@@ -12,7 +12,9 @@ const handleValidationErrors = (req, res) => {
 // Get all categories
 exports.getCategories = async (req, res) => {
     try {
-        const categories = await Category.findAll();
+        const categories = await Category.findAll({
+            include: { model: Entry, as: 'entries' }, // Include associated entries
+        });
         res.status(200).json(categories);
     } catch (err) {
         console.error('Error fetching categories:', err.message);
@@ -76,6 +78,9 @@ exports.deleteCategory = async (req, res) => {
         if (!category) {
             return res.status(404).json({ error: 'Category not found. Please check the ID and try again.' });
         }
+
+        // Unassign entries associated with the category
+        await Entry.update({ categoryId: null }, { where: { categoryId: id } });
 
         await category.destroy();
         res.status(200).json({ message: 'Category deleted successfully.' });

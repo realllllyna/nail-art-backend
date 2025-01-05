@@ -1,7 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const Entry = require('../models/entry'); // Import Entry model
-const Category = require('../models/category'); // Import Category model
+const { Category, Entry } = require('../models');
 const { body, param, validationResult } = require('express-validator');
 
 // Helper function to handle validation errors

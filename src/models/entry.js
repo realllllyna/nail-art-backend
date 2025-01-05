@@ -1,6 +1,5 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../db');
-const Category = require('./category'); // Import Category model
 
 const Entry = sequelize.define('Entry', {
   title: {
@@ -41,17 +40,14 @@ const Entry = sequelize.define('Entry', {
   },
   categoryId: {
     type: DataTypes.INTEGER,
-    allowNull: false, // Ensures a categoryId is always set
+    allowNull: false,
     references: {
-      model: Category, 
-      key: 'id', 
+      model: 'Categories', // Use table name as a reference
+      key: 'id',
     },
   },
 }, {
   tableName: 'Entries',
 });
-
-// Establish the relationship
-Entry.belongsTo(Category, { foreignKey: 'categoryId', as: 'category' });
 
 module.exports = Entry;
