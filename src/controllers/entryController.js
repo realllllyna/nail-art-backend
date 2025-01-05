@@ -20,21 +20,49 @@ exports.getEntries = async (req, res) => {
 // Create an entry
 exports.createEntry = async (req, res) => {
     try {
-        const { title, description, categoryId, imageUrl } = req.body;
-
-        // Use categoryId as the foreign key reference
-        const entry = await Entry.create({
-            title,
-            description,
-            categoryId,  // Store the categoryId, not the category name
-            imageUrl
-        });
-
-        res.status(201).json(entry);
-    } catch (err) {
-        res.status(500).json({ error: err.message });
+      const {
+        title,
+        description,
+        categoryId,
+        imageUrl,
+        price,
+        artist,
+        duration,
+        colorOptions,
+        materials,
+        aftercare,
+        allergyWarnings,
+        availability,
+      } = req.body;
+  
+      // Validate categoryId
+      const category = await Category.findByPk(categoryId);
+      if (!category) {
+        return res.status(400).json({ error: 'Invalid categoryId' });
+      }
+  
+      const newEntry = await Entry.create({
+        title,
+        description,
+        categoryId,
+        imageUrl,
+        price,
+        artist,
+        duration,
+        colorOptions,
+        materials,
+        aftercare,
+        allergyWarnings,
+        availability,
+      });
+  
+      console.log('New entry created:', newEntry);
+      res.status(201).json(newEntry);
+    } catch (error) {
+      console.error('Error creating entry:', error.message);
+      res.status(500).json({ error: 'Internal Server Error' });
     }
-};
+  };
 
 // Update an entry
 exports.updateEntry = async (req, res) => {

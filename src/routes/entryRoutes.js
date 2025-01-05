@@ -43,10 +43,20 @@ router.get('/:id', async (req, res) => {
 });
 
 // Create a new entry (for AddNail.vue)
-router.post('/', [
+router.post('/add', [
+    // Validation middleware
     body('title').notEmpty().withMessage('Title is required'),
     body('description').notEmpty().withMessage('Description is required'),
     body('categoryId').isInt().withMessage('categoryId must be an integer'),
+    body('price').isFloat({ min: 0 }).withMessage('Price must be a positive number'),
+    body('artist').notEmpty().withMessage('Artist is required'),
+    body('duration').isInt({ min: 1 }).withMessage('Duration must be a positive integer'),
+    body('imageUrl').optional().isString().withMessage('Image URL must be a string'),
+    body('colorOptions').optional().isString().withMessage('Color options must be a string'),
+    body('materials').optional().isString().withMessage('Materials must be a string'),
+    body('aftercare').optional().isString().withMessage('Aftercare must be a string'),
+    body('allergyWarnings').optional().isString().withMessage('Allergy warnings must be a string'),
+    body('availability').optional().isString().withMessage('Availability must be a string'),
 ], async (req, res) => {
     // Validate incoming request data
     const errors = validationResult(req);
@@ -55,7 +65,20 @@ router.post('/', [
     }
 
     try {
-        const { title, description, categoryId, imageUrl } = req.body;
+        const {
+            title,
+            description,
+            categoryId,
+            price,
+            artist,
+            duration,
+            imageUrl,
+            colorOptions,
+            materials,
+            aftercare,
+            allergyWarnings,
+            availability,
+        } = req.body;
 
         // Validate if categoryId exists in Categories table
         const category = await Category.findByPk(categoryId);
@@ -63,11 +86,27 @@ router.post('/', [
             return res.status(400).json({ error: 'Invalid categoryId' });
         }
 
-        const newEntry = await Entry.create({ title, description, categoryId, imageUrl });
-        res.status(201).json(newEntry);
+        // Create the new entry
+        const newEntry = await Entry.create({
+            title,
+            description,
+            categoryId,
+            price,
+            artist,
+            duration,
+            imageUrl,
+            colorOptions,
+            materials,
+            aftercare,
+            allergyWarnings,
+            availability,
+        });
+
+        console.log('New entry created:', newEntry); // Debugging log
+        res.status(201).json(newEntry); // Respond with the created entry
     } catch (error) {
         console.error('Error creating entry:', error.message);
-        res.status(400).json({ error: 'Bad Request' });
+        res.status(500).json({ error: 'Internal Server Error' });
     }
 });
 
