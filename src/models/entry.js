@@ -42,7 +42,7 @@ const Entry = sequelize.define('Entry', {
     type: DataTypes.INTEGER,
     allowNull: true,
     references: {
-      model: 'Categories', // Use table name as a reference
+      model: 'Categories',
       key: 'id',
     },
   },

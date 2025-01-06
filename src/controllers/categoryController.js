@@ -16,9 +16,9 @@ exports.getCategories = async (req, res) => {
             include: {
                 model: Entry,
                 as: 'entries',
-                attributes: ['id', 'title'], // Include relevant entry fields
+                attributes: ['id', 'title'],
             },
-            attributes: ['id', 'name', 'description'], // Return specific category fields
+            attributes: ['id', 'name', 'description'],
         });
         res.status(200).json(categories);
     } catch (err) {

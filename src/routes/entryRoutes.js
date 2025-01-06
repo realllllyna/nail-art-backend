@@ -17,7 +17,7 @@ router.get('/', async (req, res) => {
         const entries = await Entry.findAll({
             include: {
                 model: Category,
-                as: 'category', // Alias set in the Entry model
+                as: 'category',
                 attributes: ['name'], // Fetch only the 'name' of the category
             }
         });
@@ -37,7 +37,7 @@ router.get('/:id', [
         const entry = await Entry.findByPk(req.params.id, {
             include: {
                 model: Category,
-                as: 'category', // Alias set in the Entry model
+                as: 'category',
                 attributes: ['name'], // Fetch only the 'name' of the category
             }
         });
