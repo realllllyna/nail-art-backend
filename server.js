@@ -14,13 +14,21 @@ const app = express();
 app.use(cors());
 app.use(bodyParser.json());
 
-// Routes
+// API Routes
 app.use('/categories', categoryRoutes); // Handle requests for categories
 app.use('/entries', entryRoutes);       // Handle requests for entries
 app.use('/uploads', express.static(path.join(__dirname, 'uploads'))); // Serve uploaded images
 
-// Serve frontend static files
+// Root Route
+app.get('/', (req, res) => {
+    res.send('Welcome to the Nail Art Backend!');
+});
+
+// Serve Frontend Static Files
 app.use(express.static(path.resolve(__dirname, '../frontend/dist')));
+app.get('*', (req, res) => {
+    res.sendFile(path.resolve(__dirname, '../frontend/dist/index.html'));
+});
 
 // Error Handling Middleware
 app.use((err, req, res, next) => {
