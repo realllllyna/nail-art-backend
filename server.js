@@ -14,10 +14,12 @@ const app = express();
 app.use(cors());
 app.use(bodyParser.json());
 
+console.log('static', path.join(__dirname, 'uploads'))
+
 // API Routes
 app.use('/categories', categoryRoutes); // Handle requests for categories
 app.use('/entries', entryRoutes);       // Handle requests for entries
-app.use('/uploads', express.static(path.join(__dirname, 'uploads'))); // Serve uploaded images
+app.use('/uploads', express.static(path.join(__dirname, 'uploads'))); // Server uploaded images
 
 // Root Route
 app.get('/', (req, res) => {
