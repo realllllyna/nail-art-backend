@@ -11,11 +11,7 @@ const entryRoutes = require('./src/routes/entryRoutes');
 const app = express();
 
 // Middleware
-app.use(cors({
-    origin: 'https://nail-art-frontend.netlify.app', // Replace with your Netlify URL
-    methods: 'GET,POST,PUT,DELETE',
-    credentials: true, // Enable credentials if needed
-}));
+app.use(cors());
 app.use(bodyParser.json());
 
 console.log('static', path.join(__dirname, 'uploads'))
@@ -23,7 +19,7 @@ console.log('static', path.join(__dirname, 'uploads'))
 // API Routes
 app.use('/categories', categoryRoutes); // Handle requests for categories
 app.use('/entries', entryRoutes);       // Handle requests for entries
-app.use('/uploads', express.static(path.join(__dirname, 'uploads'))); // Serve uploaded images
+app.use('/uploads', express.static(path.join(__dirname, 'uploads'))); // Server uploaded images
 
 // Root Route
 app.get('/', (req, res) => {
@@ -55,7 +51,7 @@ const startServer = async () => {
         const PORT = process.env.PORT || 3000;
         app.listen(PORT, () => {
             console.log(`Server running on http://localhost:${PORT}`);
-        });
+        });        
     } catch (err) {
         console.error('Database synchronization error:', err.message);
         process.exit(1); // Exit process on fatal error
